@@ -7,10 +7,19 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import Link from "next/link";
+import { useDispatch, useSelector } from 'react-redux';
+import { increment } from '@store/reducers';
+import { RootState } from '@store/store';
 
 const NavSkill = () => {
+
+  const dispatch = useDispatch();
+  const value = useSelector((state: RootState) => state.test.value);
+
+  const handleIncrementClick = () => {
+    dispatch(increment());
+  };
   const queryClient = useQueryClient();
-  const [skillList, setSkillList] = useState([]);
 
   const fetchSkills = async () => {
     const res = await fetch("/skills.json");
@@ -48,13 +57,13 @@ const NavSkill = () => {
             href={`/components/skills/${skill.name}`}
             className="text-white no-underline transition hover:bg-white/20"
           >
-            {skill.name} ({skill.level})
+            {skill.name} ({value})
           </Link>
           <button
             className="text-white no-underline transition hover:bg-white/20"
-            onClick={() => handleAddLevel(skill.name)}
+            onClick={handleIncrementClick}
           >
-            Add level
+            Add Level
           </button>
         </div>
       ))}

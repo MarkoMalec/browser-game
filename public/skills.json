@@ -1,14 +1,14 @@
 {
     "skills": [
         {
-            "name": "Woodcutting",
+            "name": "woodcutting",
             "description": "Skill 1 description",
             "level": 1,
             "xp": 0,
             "xpToNextLevelFormula": "100 * level"
         },
         {
-            "name": "Attack",
+            "name": "attack",
             "description": "Skill 1 description",
             "level": 1,
             "xp": 0,
