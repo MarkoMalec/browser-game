@@ -31,6 +31,34 @@ declare module "next-auth" {
   // }
 }
 
+
+const updateMissingSkills = async (userId: string) => {
+  // Get all skills from the 'skills' table
+  const allSkills = await prisma.skills.findMany();
+
+  // Get the user's current skills from the 'user_skills' table
+  const userSkills = await prisma.user_skills.findMany({
+    where: { user_id: userId },
+  });
+
+  // Find the missing skills
+  const missingSkills = allSkills.filter(
+    (skill) => !userSkills.some((userSkill) => userSkill.skill_id === skill.skill_id)
+  );
+
+  // Create the missing skills in the 'user_skills' table for the user
+  const createUserSkillsPromises = missingSkills.map((skill) => {
+    return prisma.user_skills.create({
+      data: {
+        user_id: userId,
+        skill_id: skill.skill_id,
+      },
+    });
+  });
+
+  await Promise.all(createUserSkillsPromises);
+};
+
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks,
  * etc.
@@ -38,7 +66,20 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  **/
 export const authOptions: NextAuthOptions = {
+  events: {
+    signIn: async ({ user }) => {
+      console.log("signIn event triggered");
+      await updateMissingSkills(user.id);
+      return true;
+    },
+    afterSignIn: async ({ user }) => {
+      console.log("This is the user: " + user);
+      await updateMissingSkills(user.id);
+    },
+  },
+
   callbacks: {
+    
     session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;

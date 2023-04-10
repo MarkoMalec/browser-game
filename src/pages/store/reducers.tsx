@@ -1,24 +1,38 @@
-import { combineReducers, createSlice } from '@reduxjs/toolkit';import React, { useState, useEffect } from "react";
+import { combineReducers, createSlice } from '@reduxjs/toolkit';
+import React, { useState, useEffect } from "react";
+import produce from 'immer';
 
-const testSlice = createSlice({
-  name: 'test',
-  initialState: { value: 0 },
+const skillsSlice = createSlice({
+  name: 'skills',
+  initialState: { skills: [] },
   reducers: {
-    increment: (state) => {
-      state.value += 1;
+    addSkill: (state, action) => {
+      const newSkills = action.payload;
+      state.skills = newSkills;
     },
-    decrement: (state) => {
-      state.value -= 1;
+    addLevel: (state, action) => {
+      const { skillIndex, levelIncrease } = action.payload;
+      state.skills[skillIndex].level += levelIncrease;
     },
-  },
+  }
 });
 
-export const { increment } = testSlice.actions; // Extract the `increment` action creator from the `reducers` object in `testSlice`
-export const testReducer = testSlice.reducer; // Export the `testReducer` function as a named export
+export const { addSkill , addLevel } = skillsSlice.actions;
 
-const rootReducer = combineReducers({
-  test: testReducer,
-  // Add your other reducers here
-});
+// Async action creator to load initial skills data from file
+export const loadSkills = () => dispatch => {
+  fetch('/skills.json')
+    .then(response => response.json())
+    .then(data => {
+      dispatch(addSkills(data.skills));
+      console.log(data.skills);
+    })
+    .catch(error => {
+      console.error('Error loading skills data:', error);
+    });
+};
 
-export default rootReducer;
+// Helper action creator to add an array of skills to the state
+const addSkills = skills => ({ type: addSkill.type, payload: skills });
+
+export default skillsSlice.reducer;

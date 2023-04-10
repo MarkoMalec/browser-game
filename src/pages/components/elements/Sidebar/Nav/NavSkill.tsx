@@ -1,73 +1,79 @@
 import React, { useState, useEffect } from "react";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
 import Link from "next/link";
-import { useDispatch, useSelector } from 'react-redux';
-import { increment } from '@store/reducers';
-import { RootState } from '@store/store';
+import { useSession } from "next-auth/react";
 
 const NavSkill = () => {
+  const [skillList, setSkillList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
+  const userId = session?.user.id;
+  // console.log(userId);
 
-  const dispatch = useDispatch();
-  const value = useSelector((state: RootState) => state.test.value);
+  useEffect(() => {
+    async function fetchSkillListData() {
+      // console.log(`https://sevario.xyz:6969/api/skills/` + userId);
+      try {
+        const response = await fetch(
+          `https://sevario.xyz:6969/api/skills/` + userId
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+        const data = await response.json();
+        // console.log(data);
+        setSkillList(data.result);
+        setLoading(false);
+        // console.log('Skill List: ' + data.result);
+      } catch (err) {
+        console.error("Failed to fetch skill data:", err);
+      }
+    }
 
-  const handleIncrementClick = () => {
-    dispatch(increment());
+    fetchSkillListData();
+  }, [userId]);
+
+  const capitalizeWords = (str: string) => {
+    return str
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
-  const queryClient = useQueryClient();
 
-  const fetchSkills = async () => {
-    const res = await fetch("/skills.json");
-    return res.json();
-  };
-
-  const { isLoading, isError, data, error } = useQuery({
-    queryKey: ["skills"],
-    queryFn: fetchSkills,
-  });
-
-  if (isLoading) {
-    return <span>Loading...</span>;
+  if (loading) {
+    return <div>loading...</div>;
   }
-
-  if (isError) {
-    return <span>Error: {(error as Error).message}</span>;
-  }
-  const handleAddLevel = (skillName: string) => {
-    const updatedData = {
-      ...data,
-      skills: data.skills.map((skill: { name: string; level: number }) =>
-        skill.name === skillName ? { ...skill, level: skill.level + 1 } : skill
-      ),
+  interface SkillItem {
+    user_skill_id: number;
+    user_id: string;
+    skill_id: number;
+    level: number;
+    current_xp: number;
+    updated_at: string;
+    skills: {
+      skill_id: number;
+      skill_name: string;
+      description: string;
     };
-    queryClient.setQueryData(["skills"], updatedData);
-  };
+  }
 
   return (
     // loop through data and return a button for each skill
-    <div className="flex flex-col items-center justify-center gap-4">
-      {data.skills.map((skill: { name: string; level: number }) => (
-        <div className="" key={skill.name}>
-          <Link
-            href={`/components/skills/${skill.name}`}
-            className="text-white no-underline transition hover:bg-white/20"
-          >
-            {skill.name} ({value})
-          </Link>
-          <button
-            className="text-white no-underline transition hover:bg-white/20"
-            onClick={handleIncrementClick}
-          >
-            Add Level
-          </button>
-        </div>
-      ))}
-    </div>
+    <>
+      <h3 className="w-full border-b pb-3 border-gray-700">Skills</h3>
+      <ul>
+        {skillList.map((skill: SkillItem) => (
+          <li key={skill.skills.skill_name}>
+            <Link
+              href={`/skills/${skill.skills.skill_name}`}
+              className="text-white no-underline transition hover:bg-white/20"
+            >
+              {capitalizeWords(skill.skills.skill_name)} (1)
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 };
 
