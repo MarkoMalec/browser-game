@@ -20,7 +20,7 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 export const useTask = () => {
   const context = useContext(TaskContext);
   if (!context) {
-    throw new Error("there is no useTask context inside TaskProvider");
+    throw new Error("can't find useTask context inside TaskProvider");
   }
   return context;
 };
